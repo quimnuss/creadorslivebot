@@ -1,3 +1,4 @@
+import asyncio
 import curlify
 import requests
 import typer
@@ -8,17 +9,16 @@ from config.config import *
 app = typer.Typer()
 
 
-@app.command()
-def subscribe(twitch_username: str = TWITCH_USERNAME):
+async def subscribe(twitch_username: str = TWITCH_USERNAME):
     twitch = Twitch(app_id=APP_ID, app_secret=APP_SECRET,
                     callback_url=TWITCH_CALLBACK_URL)
 
-    channel_id = twitch.get_channel_id_from_username(username=twitch_username)
+    channel_id = await twitch.get_channel_id_from_username(username=twitch_username)
 
     esubtype = 'channel.follow'
 
     try:
-        response = twitch.event_subscribe(
+        response = await twitch.event_subscribe(
             esubtype=esubtype, channel_id=channel_id)
         print(f"Status {response.status_code}. Body: {response.json()}")
     except requests.HTTPError as e:
@@ -30,6 +30,19 @@ def subscribe(twitch_username: str = TWITCH_USERNAME):
             f"Error subscribing to {esubtype} response code: {e}")
 
         raise e
+
+
+async def check_subscriptions():
+    twitch = Twitch(app_id=APP_ID, app_secret=APP_SECRET,
+                    callback_url=TWITCH_CALLBACK_URL)
+    esublist = await twitch.get_event_subscriptions()
+
+    logging.info(esublist)
+
+
+@app.command()
+async def ttvsubscribe(twitch_username: str = TWITCH_USERNAME):
+    asyncio.run(subscribe(twitch_username))
 
 
 @app.command()
@@ -76,12 +89,8 @@ def unsubscribe_all():
 
 
 @app.command()
-def check_subscriptions():
-    twitch = Twitch(app_id=APP_ID, app_secret=APP_SECRET,
-                    callback_url=TWITCH_CALLBACK_URL)
-    esublist = twitch.get_event_subscriptions()
-
-    logging.info(esublist)
+def ttv_check_subscriptions():
+    asyncio.run(check_subscriptions())
 
 
 if __name__ == '__main__':

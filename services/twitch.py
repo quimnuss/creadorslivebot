@@ -37,8 +37,8 @@ class Twitch:
         }
         return headers
 
-    def get_channel_id_from_username(self, username):
-        response = requests.get(
+    async def get_channel_id_from_username(self, username):
+        response = await requests.get(
             url=f'{self.base_url}/users', headers=self.auth_headers(), params={'login': username}, timeout=10)
 
         response.raise_for_status()
@@ -60,7 +60,7 @@ class Twitch:
         response.raise_for_status()
         return response
 
-    def event_subscribe(self, esubtype, channel_id):
+    async def event_subscribe(self, esubtype, channel_id):
         """ type esubtype event subscription to channel channel_id
 
             get channel_id with get_channel_id_from_username
@@ -75,7 +75,7 @@ class Twitch:
             "transport": {"method": "webhook", "callback": self.callback_url, "secret": self.app_secret}
         }
 
-        response = requests.post(
+        response = await requests.post(
             self.sub_url, headers=self.auth_headers(), json=data, timeout=10)
 
         logging.info(response.json())
